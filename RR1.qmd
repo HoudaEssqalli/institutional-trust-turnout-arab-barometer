@@ -181,7 +181,7 @@ cleaning_summary <- data.frame(
 
 kable(
   cleaning_summary,
-  caption = "Table 1. Sample size before and after data cleaning"
+  caption = "Table 1. Sample size before and after data cleaning "
 ) %>%
   kable_styling(full_width = FALSE)
 ```
@@ -823,7 +823,7 @@ Future research could estimate country-specific models and incorporate
 additional political and socioeconomic controls to better account for contextual
 variation.
 
-The purpose of this report is therefore not to provide a fully saturated model
+Hence, the purpose of this report is therefore not to provide a fully saturated model
 of turnout, but to offer a focused first test of the bivariate trust–turnout
 relationship in a comparative Arab context.
 
