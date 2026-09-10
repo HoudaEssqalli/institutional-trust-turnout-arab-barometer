@@ -1,0 +1,1549 @@
+---
+title: "Political Interest and Electoral Participation in the Arab World: Extending the Analysis of Institutional Trust"
+author: "Houda ES-SQALLI"
+date: "17 April 2026"
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    toc-location: right
+    embed-resources: true
+---
+
+```{=html}
+<style>
+p {
+  text-align: justify;
+}
+</style>
+```
+
+## Preamble
+
+This report is the second in a two-part empirical exercise examining the
+individual-level determinants of electoral participation in the Arab world.
+Both reports draw on Wave VII of the Arab Barometer (2021--2022), a comparative
+survey conducted across twelve countries in the Middle East and North Africa:
+Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Libya, Mauritania, Morocco,
+Palestine, Sudan, and Tunisia, using stratified probabilistic sampling.
+
+Research Report 1 tested whether institutional trust predicts self-reported
+turnout. The dependent variable was a binary indicator of whether the respondent
+reported having voted in the most recent parliamentary election (`Q301A`:
+1 = voted, 0 = abstained). The main explanatory variable was trust in the
+national government (`Q201A_1`), measured on a four-point ordinal scale and
+reversed so that higher values reflect greater trust. The analytic sample
+comprised N = 20,034 respondents after excluding "Don't know" and "Refused"
+responses. All models were estimated as Linear Probability Models, chosen for
+the direct interpretability of coefficients as percentage-point changes in the
+probability of voting, with heteroskedasticity-robust standard errors (HC1),
+controlling for age and country fixed effects.
+
+Results consistently supported the hypothesis: a one-unit increase on the trust
+scale was associated with a 3.3 percentage-point increase in the probability of
+reporting having voted (β = 0.033, *p* < 0.001, *R²* = 0.08). This association
+held across a logistic regression and a categorical specification of trust used
+as robustness checks. The low *R²*, however, pointed to a more fundamental
+limitation: aside from country fixed effects, the model included only age as an
+individual-level control, leaving several theoretically important predictors of
+turnout unaccounted for. Research Report 2 addresses this limitation directly.
+
+
+## Research Question and Motivation
+
+Research Report 1 showed that institutional trust predicts turnout, yet
+trust captures how citizens *evaluate* the political system, not how
+attentively they *follow* it. These are empirically separable dimensions:
+a citizen may distrust the government and still monitor politics closely,
+or express confidence in institutions while remaining disengaged from
+public affairs. The model left most of the individual variation in
+participation unexplained, which is unsurprising given that institutional
+trust captures only one channel through which citizens relate to politics.
+
+Political interest is precisely this second dimension. The two variables
+operate through distinct mechanisms. Trust reflects a judgment about
+institutional legitimacy: citizens who believe the system is trustworthy
+may feel that voting is worthwhile because the outcome will be respected.
+Political interest, by contrast, operates through information and
+salience: citizens who follow politics are more aware of what is at stake
+in an election, more exposed to campaign messaging, and more likely to
+have formed preferences over candidates or parties. In short, trust
+shapes the *willingness* to participate, while interest shapes the
+*attentiveness* that makes participation feel relevant.
+
+Verba, Schlozman and Brady (1995) argue that political interest reduces
+the informational costs of participation by keeping citizens attentive to
+electoral stakes and receptive to mobilization. Norris (2011) extends this
+logic cross-nationally, showing that motivational engagement predicts
+turnout independently of institutional evaluations across diverse
+democratic contexts. Existing studies of turnout in the Arab world have
+tended to foreground structural and institutional factors such as
+electoral rules, regime type, and levels of repression, while
+individual-level motivational variables such as political interest have
+featured less prominently in comparative survey-based analyses of the
+region.
+
+This report asks:
+
+> *Do individuals with greater political interest report higher rates of
+> electoral participation, net of their level of institutional trust,
+> age, and country context?*
+
+Addressing this question requires retaining trust in government alongside
+political interest in the same model. This serves two purposes: it
+preserves continuity with RR1 and allows us to assess whether the
+association between trust and turnout documented previously holds once
+motivational engagement is taken into account. If political interest
+independently predicts turnout, the trust coefficient estimated in RR1
+may have been partly inflated by its omission.
+
+
+## Hypotheses
+
+Building on the findings of Research Report 1 and the theoretical motivation
+outlined above, this report tests one central hypothesis:
+
+**H1:** Individuals with greater political interest are more likely to report
+having voted. Higher levels of interest are expected to lower the
+informational costs of participation and increase awareness of electoral
+stakes, net of institutional trust, age, and country context.
+
+This hypothesis follows from the expectation that motivational engagement,
+understood as how actively a citizen follows political affairs, shapes the
+decision to vote independently of how they evaluate political institutions
+(Verba, Schlozman and Brady, 1995; Norris, 2011). It concerns association
+rather than causation. Institutional trust is retained in the model as a
+control variable, which allows us to assess whether the association
+documented in RR1 persists once motivational engagement is accounted for.
+
+
+
+## Data
+
+### Data Source
+
+This report uses data from Wave VII of the Arab Barometer (2021--2022), a
+comparative survey conducted across twelve countries in the Middle East and
+North Africa: Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Libya,
+Mauritania, Morocco, Palestine, Sudan, and Tunisia. Data were collected
+through stratified probabilistic sampling, primarily using face-to-face
+computer-assisted personal interviews (CAPI). National sample sizes range
+from approximately 1,200 to 2,400 respondents per country.
+
+The dataset is pooled across countries, which makes it possible to examine
+the average association between political interest and electoral participation
+at the regional level. At the same time, cross-country variation is central
+to the analysis. To account for differences in political context across
+national settings, all models include country fixed effects.
+
+
+### Variables
+
+**Dependent variable.** Electoral participation is measured by survey item
+`Q301A`, which asks respondents whether they voted in the most recent
+parliamentary election. Responses are coded as a binary variable
+(1 = voted, 0 = abstained).
+
+**Key independent variable.** Political interest is measured by survey
+item `Q404`: "In general, to what extent are you interested in politics?"
+Responses are recorded on a four-point scale and recoded so that higher
+values reflect greater interest.
+
+**Control variables.** Trust in the national government (`Q201A_1`) is
+measured on a four-point ordinal scale and recoded so that higher values
+reflect greater trust, following the same coding as in Research Report 1.
+Age (`Q1001`) is included as a continuous variable. Country fixed effects
+are included to account for differences in political context across
+national settings.
+
+
+### Data Preparation
+
+Because Research Report 2 introduces a new variable, political
+interest (`Q404`), the cleaning procedure is extended relative to RR1
+to account for missing values across all four variables of interest:
+electoral participation, institutional trust, political interest, and age.
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE}
+# Set working directory and seed for reproducibility
+knitr::opts_knit$set(root.dir = "~/Documents/Data analysis 1/")
+set.seed(123)
+
+# Data manipulation and formatting
+library(dplyr)
+library(tidyr)
+library(knitr)
+library(kableExtra)
+library(broom)
+
+# Visualisation
+library(ggplot2)
+library(scales)
+library(gridExtra)
+
+# Regression and inference
+library(lmtest)
+library(sandwich)
+library(marginaleffects)
+library(performance)
+
+# Missing data
+library(mice)
+
+# Predictive modelling
+library(caret)
+library(glmnet)
+
+# Sensitivity analysis
+library(specr)
+
+# Utilities
+library(purrr)
+
+# Global chunk options: show code, suppress messages and warnings
+knitr::opts_chunk$set(
+  echo    = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+
+# Consistent color palette across all figures
+turnout_colors <- c(
+  "Abstained" = "#F6E8B1",
+  "Voted"     = "#D97B93"
+)
+
+# Global theme applied to all plots
+theme_report <- theme_minimal() +
+  theme(
+    legend.position  = "top",
+    plot.title       = element_text(face = "bold"),
+    axis.text.x      = element_text(angle = 20, hjust = 1)
+  )
+
+# Helper function: add significance stars to p-values
+stars <- function(p) {
+  case_when(p < 0.001 ~ "***",
+            p < 0.01  ~ "**",
+            p < 0.05  ~ "*",
+            TRUE      ~ "")
+}
+```
+
+```{r load-data}
+data <- read.csv("AB7_ENG_Release_Version6.csv", stringsAsFactors = FALSE)
+```
+
+
+#### Data Cleaning
+
+In the Arab Barometer, response codes 98 ("Don't know") and 99 ("Refused")
+indicate that the respondent either could not or chose not to provide a
+substantive answer. These codes carry no meaningful information about the
+underlying construct and are therefore recoded as missing throughout. The
+same applies to age, where code 99999 identifies a refusal to disclose.
+
+Following the same approach as in RR1, `pol_interest` is recoded so that
+higher values reflect greater political interest.
+
+```{r cleaning}
+clean2 <- data %>%
+  mutate(
+    # Recode vote: 1 = voted, 0 = abstained
+    vote_binary = case_when(
+      Q301A == 1 ~ 1,
+      Q301A == 2 ~ 0,
+      TRUE       ~ NA_real_
+    ),
+    # Reverse trust scale (higher = more trust), 98/99 -> NA
+    trust = ifelse(Q201A_1 %in% 1:4, 5 - Q201A_1, NA_real_),
+
+    # Reverse interest scale (higher = more interested), 98/99 -> NA
+    pol_interest = ifelse(Q404 %in% 1:4, 5 - Q404, NA_real_),
+
+    # Age (99999 = refused)
+    age = ifelse(Q1001 == 99999, NA_real_, as.numeric(Q1001)),
+
+    # Country for fixed effects
+    country = factor(COUNTRY)
+  )
+```
+
+
+#### Missing Values
+
+Estimating the relationship between trust and turnout requires addressing the high rate of non-response, particularly for institutional evaluations, which may introduce selection bias if not handled systematically.
+
+```{r missing-summary}
+# Variables of interest for missing value check
+vars_rr2 <- c("vote_binary", "trust", "pol_interest", "age")
+
+# Count valid and missing observations per variable
+missing_summary <- data.frame(
+  Variable  = c("Electoral participation", "Trust in government",
+                "Political interest", "Age"),
+  N_total   = nrow(clean2),
+  N_valid   = sapply(vars_rr2, function(v) sum(!is.na(clean2[[v]]))),
+  N_missing = sapply(vars_rr2, function(v) sum(is.na(clean2[[v]]))),
+  row.names = NULL
+) %>%
+  mutate(Pct_missing = round(N_missing / N_total * 100, 1))
+
+# Display as formatted table
+kable(missing_summary,
+      col.names = c("Variable", "N total", "N valid",
+                    "N missing", "% missing"),
+      caption   = "Table 1. Missing values by variable",
+      booktabs  = TRUE) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = "Responses coded 98 or 99 in the original
+           survey were recoded as missing.")
+```
+
+Table 1 shows that missing data are not evenly distributed across
+variables. Trust in government has by far the highest rate of
+non-response, at **22.9%**, which likely reflects the politically sensitive
+nature of institutional evaluations in several of the surveyed countries.
+This raises concerns about *non-random missingness*: respondents who
+distrust the government may be systematically more likely to refuse to
+answer, which could bias a purely listwise approach. Political interest,
+by contrast, is nearly complete, with fewer than **1%** of observations
+missing. Electoral participation and age present moderate attrition at
+**8.4%** and **1.9%** respectively.
+
+Given the high missingness on trust, simply dropping all incomplete cases
+is risky. To check whether this matters, the model will be estimated both
+on complete cases only and using **multiple imputation** (MICE). This
+comparison is reported in the sensitivity analysis section.
+
+```{r complete-cases, results='hide'}
+# Complete-case sample used for all main analyses
+clean2_cc <- clean2 %>%
+  filter(!is.na(vote_binary),
+         !is.na(trust),
+         !is.na(pol_interest),
+         !is.na(age),
+         !is.na(country))
+
+n_cc <- nrow(clean2_cc)
+```
+
+The complete-case sample retains N = **`r format(n_cc, big.mark = ",")`**
+respondents.
+
+
+#### Outliers
+
+Since the dependent variable is binary and both political interest and
+trust are measured on bounded four-point ordinal scales, outliers in the
+traditional distributional sense can only arise in the continuous variable:
+age.
+
+```{r outlier-boxplots, fig.cap="Figure 1. Boxplots of the variables of interest.", fig.width=10, fig.height=4}
+# Boxplot for age (only continuous variable, can have outliers)
+p_age <- ggplot(clean2_cc, aes(y = age)) +
+  geom_boxplot(fill = "#D97B93", alpha = 0.5, width = 0.4) +
+  labs(title = "Age", y = "Years") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+# Boxplot for trust (bounded 1-4 scale)
+p_trust <- ggplot(clean2_cc, aes(y = trust)) +
+  geom_boxplot(fill = "#E8A87C", alpha = 0.5, width = 0.4) +
+  labs(title = "Trust in government", y = "Score (1-4)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+# Boxplot for political interest (bounded 1-4 scale)
+p_interest <- ggplot(clean2_cc, aes(y = pol_interest)) +
+  geom_boxplot(fill = "#F6E8B1", alpha = 0.5, width = 0.4) +
+  labs(title = "Political interest", y = "Score (1-4)") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.x = element_blank(),
+        axis.ticks.x = element_blank())
+
+# Arrange side by side
+grid.arrange(p_age, p_trust, p_interest, ncol = 3)
+```
+
+```{r outlier-stats, results='hide'}
+# IQR method to identify age outliers
+Q1  <- quantile(clean2_cc$age, 0.25)
+Q3  <- quantile(clean2_cc$age, 0.75)
+IQR_age <- Q3 - Q1
+lower_fence <- Q1 - 1.5 * IQR_age
+upper_fence <- Q3 + 1.5 * IQR_age
+
+# Count observations beyond the fences
+n_outliers_age <- sum(clean2_cc$age < lower_fence |
+                      clean2_cc$age > upper_fence)
+pct_outliers <- round(n_outliers_age / n_cc * 100, 2)
+```
+
+Figure 1 shows the distribution of the three non-binary variables. For
+trust and political interest, all values fall within the bounded 1--4
+scale, so no observation can be an outlier in the distributional sense.
+Age does show **`r n_outliers_age`** observations
+(**`r pct_outliers`%**) beyond the upper IQR fence
+(>`r round(upper_fence)` years). These are elderly respondents, and there
+is no reason to suspect data entry errors: the Arab Barometer includes
+respondents of all adult ages. Removing them would risk truncating the
+age distribution in ways that bias the age coefficient. They are retained
+for the main analysis, but the model is re-estimated without them in the
+sensitivity analysis to verify that the results are not driven by these
+observations.
+
+```{r save-outlier-data, results='hide'}
+clean2_no_out <- clean2_cc %>%
+  filter(age >= lower_fence & age <= upper_fence)
+```
+
+
+
+### Descriptive Statistics
+
+Descriptive patterns (Figure 2) suggest a monotonic relationship between interest and turnout, providing a baseline for the multivariate analysis
+
+```{r desc-distributions, fig.cap="Figure 2. Distribution of the variables of interest.", fig.width=10, fig.height=7}
+# Turnout: bar chart of voted vs abstained
+p1 <- ggplot(clean2_cc, aes(x = factor(vote_binary),
+                             fill = factor(vote_binary))) +
+  geom_bar(width = 0.5) +
+  scale_fill_manual(values = turnout_colors,
+                    labels = c("Abstained", "Voted")) +
+  labs(title = "Electoral participation", x = NULL, y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "none") +
+  scale_x_discrete(labels = c("Abstained", "Voted"))
+
+# Political interest distribution (1-4)
+p2 <- ggplot(clean2_cc, aes(x = factor(pol_interest))) +
+  geom_bar(fill = "#D97B93", alpha = 0.7, width = 0.5) +
+  labs(title = "Political interest",
+       x = "Score (1 = not interested, 4 = very interested)",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+# Trust in government distribution (1-4)
+p3 <- ggplot(clean2_cc, aes(x = factor(trust))) +
+  geom_bar(fill = "#E8A87C", alpha = 0.7, width = 0.5) +
+  labs(title = "Trust in government",
+       x = "Score (1 = no trust, 4 = great deal)",
+       y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+# Age histogram
+p4 <- ggplot(clean2_cc, aes(x = age)) +
+  geom_histogram(fill = "#F6E8B1", color = "white",
+                 binwidth = 5, alpha = 0.8) +
+  labs(title = "Age", x = "Years", y = "Count") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+
+# Panel of four distributions
+grid.arrange(p1, p2, p3, p4, ncol = 2)
+```
+
+The sample is nearly balanced on turnout: approximately half of
+respondents report having voted. Political interest is skewed towards
+lower levels, with most respondents reporting little to no interest.
+Trust in government follows a similar pattern. Age is right-skewed, with
+a concentration in the 20--40 range, consistent with the demographic
+profile of the region.
+
+```{r desc-hypothesis, fig.cap="Figure 3. Turnout rate by level of political interest.", fig.width=7, fig.height=5}
+# Compute turnout rate per level of political interest
+desc_check <- clean2_cc %>%
+  group_by(pol_interest) %>%
+  summarise(turnout = mean(vote_binary),
+            n = n(), .groups = "drop")
+
+# Readable labels for the x-axis
+interest_labels <- c("1" = "Not at all\ninterested",
+                     "2" = "Not very\ninterested",
+                     "3" = "Somewhat\ninterested",
+                     "4" = "Very\ninterested")
+
+# Bar plot with turnout % labels
+ggplot(desc_check,
+       aes(x = factor(pol_interest), y = turnout,
+           fill = factor(pol_interest))) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = paste0(round(turnout * 100, 1), "%")),
+            vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c("1" = "#F6E8B1", "2" = "#E8C87C",
+                                "3" = "#E8A87C", "4" = "#D97B93")) +
+  scale_x_discrete(labels = interest_labels) +
+  scale_y_continuous(labels = percent_format(),
+                     limits = c(0, 0.85)) +
+  labs(x = "Level of political interest",
+       y = "Turnout rate",
+       title = "Turnout rate by political interest level") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "none")
+```
+
+Figure 3 provides a first descriptive check of H1. The pattern is clear
+and monotonic: turnout rises steadily with political interest.
+Citizens reporting the highest level of interest vote at
+**`r round(desc_check$turnout[desc_check$pol_interest == 4] * 100, 1)`%**,
+compared to
+**`r round(desc_check$turnout[desc_check$pol_interest == 1] * 100, 1)`%**
+among those not at all interested. This raw gradient is consistent with
+H1 and motivates the inferential analysis that follows. Whether this gradient survives once controls are added is the question
+the regression model addresses.
+
+
+
+## Inferential Analysis: Testing H1
+
+### Statistical Model
+
+Because the outcome variable is binary, the main model is estimated as a
+logistic regression. Unlike the Linear Probability Model used in RR1,
+logistic regression constrains predicted probabilities to the [0, 1]
+interval and accounts for the non-linear relationship between predictors
+and a binary outcome.
+
+The model takes the following form:
+
+$$\log\left(\frac{\Pr(\text{voted}_i)}{1 - \Pr(\text{voted}_i)}\right) = \alpha + \beta_1 \, \text{pol\_interest}_i + \beta_2 \, \text{trust}_i + \beta_3 \, \text{age}_i + \sum_c \gamma_c \, \text{country}_c$$
+
+where $\beta_1$ is the parameter of primary interest.
+
+**On the choice of fixed versus random effects for countries.** The twelve
+countries were deliberately selected to represent the MENA region, not
+randomly sampled from a broader universe. Fixed effects are therefore more
+appropriate: they assign each country its own intercept, absorbing all
+stable cross-national differences without imposing any distributional
+assumption. This means identification comes entirely from within-country
+variation in political interest and voting behavior.
+
+**On reporting effect sizes.** Logistic regression coefficients are on
+the log-odds scale, which is hard to interpret directly. There are two
+ways to convert them into percentage-point changes: estimating a Linear
+Probability Model, or computing *average marginal effects* (AME) from
+the logistic model itself. Both give similar numbers, but the AME
+approach has the advantage of never leaving the logistic framework,
+so predicted probabilities stay within [0, 1] at every step. The main
+results are reported as AMEs; the LPM is included as a robustness check.
+
+```{r aic-comparison}
+# Compare models with different control sets using AIC
+model_full    <- glm(vote_binary ~ pol_interest + trust + age + country,
+                     data = clean2_cc, family = binomial)
+model_no_trust <- glm(vote_binary ~ pol_interest + age + country,
+                      data = clean2_cc, family = binomial)
+model_no_age   <- glm(vote_binary ~ pol_interest + trust + country,
+                      data = clean2_cc, family = binomial)
+
+# Display AIC comparison
+kable(
+  data.frame(
+    Model = c("Full (interest + trust + age + country)",
+              "Without trust",
+              "Without age"),
+    AIC   = round(c(AIC(model_full),
+                     AIC(model_no_trust),
+                     AIC(model_no_age)), 1),
+    row.names = NULL
+  ),
+  caption = "Table 2. Model selection: AIC comparison",
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+The full model has the lowest AIC, confirming that both trust and age
+contribute meaningfully and should be retained as controls. Dropping
+either increases the AIC, indicating a worse fit. The full specification
+is used for all subsequent analyses.
+
+
+
+### Results and Interpretation
+
+```{r main-logit}
+# Ensure country is a factor before fitting
+clean2_cc$country <- factor(clean2_cc$country)
+
+# Reuse the full model already fitted for AIC comparison
+model_logit <- model_full
+
+# Average marginal effects (probability-scale interpretation)
+AME <- avg_slopes(model_logit)
+
+# Tjur's R-squared for model fit
+r2_logit <- r2(model_logit)
+```
+
+Table 2 reports the raw logistic regression output on the log-odds scale.
+These coefficients indicate direction and significance but are not
+directly interpretable as probability changes. Table 3 converts them into
+average marginal effects alongside the LPM robustness check.
+
+
+```{r logit-raw-table}
+# Extract and format logit coefficients (log-odds scale)
+logit_raw <- tidy(model_logit, conf.int = TRUE) %>%
+  filter(term %in% c("pol_interest", "trust", "age")) %>%
+  mutate(
+    term      = recode(term,
+      "pol_interest" = "Political interest",
+      "trust"        = "Trust in government",
+      "age"          = "Age (years)"),
+    estimate  = round(estimate,  3),
+    std.error = round(std.error, 3),
+    statistic = round(statistic, 2),
+    p.value   = ifelse(p.value < 0.001, "< 0.001",
+                       as.character(round(p.value, 3))),
+    conf.low  = round(conf.low,  3),
+    conf.high = round(conf.high, 3)
+  ) %>%
+  select(term, estimate, std.error, statistic, p.value,
+         conf.low, conf.high)
+
+# Display as clean table
+kable(logit_raw,
+  col.names = c("", "Log-odds", "SE", "z", "p",
+                "95% CI lower", "95% CI upper"),
+  caption   = "Table 3. Logistic regression output (log-odds scale)",
+  booktabs  = TRUE, align = "lcccccc"
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = "Country FE included but not shown. AMEs in Table 3.")
+```
+
+
+```{r results-table}
+# AME table from logistic regression
+ame_tbl <- as.data.frame(AME) %>%
+  filter(term %in% c("pol_interest", "trust", "age")) %>%
+  mutate(
+    AME_est = paste0(round(estimate, 3), stars(p.value)),
+    AME_se  = paste0("(", formatC(std.error, format = "f",
+                                  digits = 4), ")"),
+    term    = recode(term,
+      "pol_interest" = "Political interest",
+      "trust"        = "Trust in government",
+      "age"          = "Age (years)")
+  ) %>%
+  select(term, AME_est, AME_se)
+
+# LPM robustness check with HC1 robust SEs
+model_lpm     <- lm(vote_binary ~ pol_interest + trust + age +
+                       factor(country), data = clean2_cc)
+robust_se_lpm <- sqrt(diag(vcovHC(model_lpm, type = "HC1")))
+n_lpm         <- nrow(clean2_cc)
+df_lpm        <- n_lpm - length(coef(model_lpm))
+
+# Format LPM results
+lpm_tbl <- tidy(model_lpm) %>%
+  filter(term %in% c("pol_interest", "trust", "age")) %>%
+  mutate(
+    rse     = robust_se_lpm[term],
+    p_rob   = 2 * pt(-abs(estimate / rse), df = df_lpm),
+    LPM_est = paste0(round(estimate, 3), stars(p_rob)),
+    LPM_se  = paste0("(", formatC(rse, format = "f", digits = 4), ")"),
+    term    = recode(term,
+      "pol_interest" = "Political interest",
+      "trust"        = "Trust in government",
+      "age"          = "Age (years)")
+  ) %>%
+  select(term, LPM_est, LPM_se)
+
+# Merge AME and LPM columns
+results_tbl <- left_join(ame_tbl, lpm_tbl, by = "term")
+
+# Add model info rows
+stats_rows <- data.frame(
+  term    = c("Country fixed effects", "N"),
+  AME_est = c("Yes", as.character(n_lpm)),
+  AME_se  = c("", ""),
+  LPM_est = c("Yes", as.character(n_lpm)),
+  LPM_se  = c("", "")
+)
+results_tbl <- bind_rows(results_tbl, stats_rows)
+
+# Display comparison table
+kable(results_tbl,
+  col.names = c("", "AME", "", "Coefficient", ""),
+  caption   = "Table 3. Predictors of electoral participation: logistic regression (AME) and LPM",
+  booktabs  = TRUE, align = "lcccc"
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  add_header_above(c(" " = 1,
+                     "Logistic regression (main)" = 2,
+                     "LPM (robustness)" = 2)) %>%
+  footnote(general = paste0(
+    "AME reported for logistic model. HC1 robust SEs for LPM. ",
+    "Country FE included but not shown. N = ", n_lpm,
+    ". *** p < 0.001, ** p < 0.01, * p < 0.05."))
+```
+
+The results are consistent across both specifications. A one-unit
+increase on the four-point political interest scale is associated with a
+**7.1 percentage-point** increase in the probability of reporting having
+voted (AME = 0.071, *p* < 0.001), the largest marginal effect in this
+specification, though the three predictors operate on different scales.
+Across the full range of the scale (three units), this corresponds to a
+difference of roughly **21 percentage points** between the least and most
+interested citizens, assuming an approximately constant marginal effect.
+H1 is supported.
+
+Institutional trust remains positively associated with turnout
+(AME = 0.023, *p* < 0.001). Its persistence after controlling for
+political interest confirms that trust and interest operate through
+separate channels: one captures a legitimacy judgment, the other
+informational attentiveness. Age is also positively associated with
+turnout (AME = 0.008, *p* < 0.001), confirming the well-documented
+life-cycle pattern.
+
+**On model fit.** Because the outcome is binary, the classical R² is not
+well suited. Tjur's R-squared offers a more appropriate alternative: it
+measures the difference between the average predicted probability for
+respondents who voted and the average predicted probability for those who
+abstained. The larger this gap, the better the model separates the two
+groups. Here, Tjur's R-squared is
+**`r round(r2_logit$R2_Tjur, 3)`**, up from the *R²* = 0.08 obtained with the LPM in RR1, though the two
+measures are not directly comparable. Adding
+political interest meaningfully improves discrimination between voters
+and non-voters, though a large share of individual variation remains
+unexplained.
+
+
+
+### Model Diagnostics
+
+```{r check-model, fig.cap="Figure 4. Model diagnostics for the main logistic regression.", fig.width=12, fig.height=8, dpi=300}
+# Diagnostic plots: binned residuals, VIF, leverage, posterior predictive check
+check_model(model_logit)
+```
+Figure 4 reports five diagnostic checks for the main logistic regression.
+
+The **posterior predictive check** (top left) compares the observed counts
+of voters and non-voters to what the model predicts. The two distributions
+overlap closely, which means the model is not systematically over- or
+under-predicting either outcome.
+
+Turning to the **binned residuals** (top right), most points fall within
+the grey error bounds, though a few red points appear around the 25% and
+50% marks. This mild deviation is common in large survey samples and does
+not distort the average marginal effects reported above.
+
+The **influential observations** plot (middle left) then checks whether
+any single respondent is driving the results. All points sit well within
+the Cook's distance contours, so no observation has an outsized influence
+on the estimates.
+
+On **collinearity** (middle right), variance inflation factors for each
+predictor are all close to 1, well below the conventional threshold of 5.
+This confirms that political interest and trust are distinct enough to be
+estimated in the same model without inflating standard errors.
+
+Finally, the **quantile residuals** (bottom) fall closely along the
+diagonal, indicating that the model's distributional assumptions are
+reasonable.
+
+Taken together, none of these checks raise concerns serious enough to
+question the results in Table 3.
+
+
+
+### Cross-Country Variation
+
+The pooled model estimates an average effect across twelve countries.
+This average may conceal meaningful variation: the relationship between
+interest and participation could be stronger where elections are more
+competitive or where media coverage of politics is more accessible.
+Figure 5 examines this by estimating the model separately for each
+country.
+
+```{r forest-plot, fig.cap="Figure 5. AME of political interest on turnout by country. Pink line = pooled AME (0.071).", fig.width=9, fig.height=6, dpi=300}
+country_labels <- c(
+  "1"  = "Algeria",  "7"  = "Iraq",      "8"  = "Jordan",
+  "9"  = "Kuwait",   "10" = "Lebanon",   "11" = "Libya",
+  "12" = "Mauritania","13" = "Morocco",  "15" = "Palestine",
+  "19" = "Sudan",    "21" = "Tunisia"
+)
+
+country_ames <- clean2_cc %>%
+  group_by(country) %>%
+  group_map(~ {
+    tryCatch({
+      m <- glm(vote_binary ~ pol_interest + trust + age,
+               data = .x, family = binomial)
+      ame <- avg_slopes(m, variables = "pol_interest")
+      data.frame(country  = as.character(unique(.x$country)),
+                 estimate = ame$estimate,
+                 conf.low = ame$conf.low,
+                 conf.high = ame$conf.high)
+    }, error = function(e) NULL)
+  }, .keep = TRUE) %>%
+  bind_rows() %>%
+  mutate(country_name = country_labels[country])
+
+overall_ame <- as.data.frame(AME) %>%
+  filter(term == "pol_interest") %>% pull(estimate)
+
+ggplot(country_ames,
+       aes(x = estimate, y = reorder(country_name, estimate))) +
+  geom_vline(xintercept = 0, linetype = "dashed",
+             color = "grey60", linewidth = 0.5) +
+  geom_vline(xintercept = overall_ame, linetype = "solid",
+             color = "#D97B93", alpha = 0.7, linewidth = 0.8) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high),
+                 height = 0.25, color = "grey40", linewidth = 0.5) +
+  geom_point(size = 3, color = "#D97B93") +
+  labs(x = "AME on Pr(voted) (percentage points)", y = NULL,
+       title = "Effect of political interest on turnout by country",
+       subtitle = "Pink line = pooled AME (0.071) | Bars = 95% CI") +
+  theme_minimal() +
+  theme(plot.title    = element_text(face = "bold"),
+        plot.subtitle = element_text(color = "grey40", size = 9))
+```
+
+Across all eleven countries where the voting question was administered
+(Egypt is excluded), the AME of political interest is positive. Most
+estimates cluster near the pooled value of 0.071, but there is visible
+spread. Countries like Morocco and Mauritania sit above the pooled line,
+suggesting a stronger link between interest and turnout, while Sudan and
+Jordan fall well below it, with wide confidence intervals that reflect
+both smaller effective samples and a genuinely weaker association. This
+variation raises a natural question: is the difference across countries
+statistically meaningful, or could it be sampling noise? The next
+subsection tests this formally.
+
+
+### Formal Test of Cross-Country Heterogeneity
+
+The forest plot is informative but informal. A more rigorous approach is
+to estimate a single pooled model with interactions between political
+interest and country, then test whether allowing the slope to vary
+improves model fit.
+
+```{r interaction-model}
+# Logistic regression with pol_interest x country interactions
+model_interact <- glm(
+  vote_binary ~ pol_interest * country + trust + age,
+  data = clean2_cc, family = binomial
+)
+
+# Likelihood ratio test: does allowing the slope to vary improve fit?
+lr_test <- anova(model_logit, model_interact, test = "Chisq")
+
+# Display LR test results
+kable(
+  data.frame(
+    Model    = c("Main model (no interactions)",
+                 "Interaction model (pol_interest x country)"),
+    Deviance = round(c(lr_test$`Resid. Dev`[1],
+                       lr_test$`Resid. Dev`[2]), 1),
+    Df       = lr_test$`Resid. Df`,
+    p_value  = c("", ifelse(lr_test$`Pr(>Chi)`[2] < 0.001,
+                             "< 0.001",
+                             round(lr_test$`Pr(>Chi)`[2], 3)))
+  ),
+  col.names = c("Model", "Residual deviance", "Residual df", "p"),
+  caption   = "Table 4. Likelihood ratio test: interaction vs. main model",
+  booktabs  = TRUE
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = "Significant p: effect of political interest differs across countries.")
+```
+
+The likelihood ratio test is significant (*p* < 0.001), confirming that
+the effect of political interest on turnout is not homogeneous across
+countries. Allowing the slope to vary by country reduces the residual
+deviance from 24,305.9 to 24,197.6, a statistically meaningful
+improvement in fit.
+
+```{r interaction-ames, fig.cap="Figure 6. Country-specific AMEs from the interaction model.", fig.width=9, fig.height=6}
+# Compute AME of pol_interest separately for each country
+ame_interact <- avg_slopes(model_interact,
+                           variables = "pol_interest",
+                           by = "country")
+
+# Add readable country names
+ame_interact_df <- as.data.frame(ame_interact) %>%
+  mutate(country_name = country_labels[as.character(country)])
+
+# Forest plot of country-specific AMEs
+ggplot(ame_interact_df,
+       aes(x = estimate, y = reorder(country_name, estimate))) +
+  geom_vline(xintercept = 0, linetype = "dashed",
+             color = "grey60", linewidth = 0.5) +
+  geom_vline(xintercept = overall_ame, linetype = "solid",
+             color = "#D97B93", alpha = 0.7, linewidth = 0.8) +
+  geom_errorbarh(aes(xmin = conf.low, xmax = conf.high),
+                 height = 0.25, color = "grey40", linewidth = 0.5) +
+  geom_point(size = 3, color = "#D97B93") +
+  labs(x = "AME of political interest on Pr(voted)", y = NULL,
+       title = "Country-specific effects from the interaction model",
+       subtitle = "Pink line = pooled AME (0.071) from main model") +
+  theme_minimal() +
+  theme(plot.title    = element_text(face = "bold"),
+        plot.subtitle = element_text(color = "grey40", size = 9))
+```
+
+Figure 6 shows where these differences lie. All country-specific AMEs
+remain positive, meaning political interest predicts turnout everywhere
+in the sample. But the magnitude varies considerably. **Morocco** and
+**Lebanon** stand out with the strongest effects, both above 0.10,
+while **Sudan** and **Jordan** show much weaker associations, with
+confidence intervals that include zero. This suggests that the
+attentiveness mechanism is context-dependent: in more competitive
+political environments, being politically informed translates into a
+sharper increase in the probability of voting.
+
+
+## Cluster Analysis: Institutional Trust Profiles
+
+The cross-country analysis showed that political interest matters
+everywhere but to varying degrees. A similar question can be asked about
+trust: does the way citizens evaluate institutions matter beyond the
+single average score used in the main model?
+
+So far, institutional trust has appeared as a single continuous variable.
+But citizens relate to political institutions in more complex ways:
+someone who distrusts the government might also distrust parliament and
+parties, or might reserve their skepticism for specific institutions while
+trusting others. If these configurations matter for voting, the single
+trust variable may be too blunt.
+
+This section groups citizens into trust profiles using k-means clustering
+on four trust items: government (Q201A_1), parliament (Q201A_2), political
+parties (Q201A_3), and the judiciary (Q201A_5).
+
+This clustering approach is used as an exploratory extension to move beyond the single averaged measure of trust and capture more nuanced patterns of institutional evaluation. It does not aim to establish causal effects but to uncover latent profiles that may be associated with different levels of electoral participation.
+
+```{r cluster-prep, results='hide'}
+# Recode four trust variables (higher = more trust)
+cluster_data <- clean2_cc %>%
+  mutate(
+    trust_gov   = trust,
+    trust_parl  = ifelse(Q201A_2 %in% 1:4, 5 - Q201A_2, NA_real_),
+    trust_party = ifelse(Q201A_3 %in% 1:4, 5 - Q201A_3, NA_real_),
+    trust_jud   = ifelse(Q201A_5 %in% 1:4, 5 - Q201A_5, NA_real_)
+  ) %>%
+  filter(!is.na(trust_gov), !is.na(trust_parl),
+         !is.na(trust_party), !is.na(trust_jud))
+
+n_cluster <- nrow(cluster_data)
+```
+
+The cluster sample retains N = **`r format(n_cluster, big.mark = ",")`**
+respondents with valid responses on all four trust items.
+
+```{r elbow-plot, fig.cap="Figure 7. Elbow plot for cluster selection.", fig.width=6, fig.height=4}
+# Standardise trust variables before clustering
+trust_matrix <- cluster_data %>%
+  select(trust_gov, trust_parl, trust_party, trust_jud) %>%
+  scale()
+
+# Compute within-cluster SS for k = 2 to 8
+set.seed(123)
+wss <- sapply(2:8, function(k)
+  kmeans(trust_matrix, centers = k, nstart = 25)$tot.withinss)
+
+# Elbow plot to guide cluster choice
+ggplot(data.frame(k = 2:8, wss = wss), aes(x = k, y = wss)) +
+  geom_line(color = "grey50") +
+  geom_point(size = 3, color = "#D97B93") +
+  scale_x_continuous(breaks = 2:8) +
+  labs(x = "Number of clusters (k)", y = "Within-cluster SS",
+       title = "Elbow plot") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"))
+```
+
+Three clusters provide a reasonable balance. The curve does not show a
+sharp elbow, but the rate of decrease slows noticeably after k = 3,
+and adding more clusters would make the profiles harder to interpret
+without a clear gain in homogeneity.
+
+
+```{r kmeans-fit, results='hide'}
+# Fit k-means with 3 clusters
+set.seed(123)
+km_fit <- kmeans(trust_matrix, centers = 3, nstart = 25)
+
+# Assign cluster labels to each respondent
+cluster_data$trust_profile <- factor(km_fit$cluster)
+```
+
+```{r cluster-means}
+# Mean trust scores per cluster (original 1-4 scale)
+profile_means <- cluster_data %>%
+  group_by(trust_profile) %>%
+  summarise(
+    Government          = round(mean(trust_gov),   2),
+    Parliament          = round(mean(trust_parl),  2),
+    `Political parties` = round(mean(trust_party), 2),
+    Judiciary           = round(mean(trust_jud),    2),
+    N = n(), .groups = "drop") %>%
+  arrange(Government) %>%
+  # Label clusters based on mean trust levels
+  mutate(Label = case_when(
+    Government <= 2 & Parliament <= 2 ~ "Low trust",
+    Government >= 3 & Parliament >= 3 ~ "High trust",
+    TRUE                              ~ "Mixed trust"))
+
+# Display as clean table
+kable(profile_means,
+      caption = "Table 5. Mean trust scores by cluster",
+      booktabs = TRUE) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = "Scores range from 1 (no trust) to 4 (great deal).")
+```
+
+Three profiles emerge from Table 5. The **low-trust** group (N = 6,290)
+scores below 1.4 on every institution. The **high-trust** group
+(N = 3,848) scores above 3.0 across the board. The **mixed-trust** group
+(N = 6,281) sits in between on most dimensions but stands out on one:
+trust in political parties is notably lower (1.52) than trust in
+parliament (2.63) or the judiciary (2.36). These citizens are not
+uniformly distrustful; they seem to distinguish between partisan
+institutions and the rest of the state. The two skeptical groups together
+outnumber the high-trust group roughly three to one, which is consistent
+with the general skew towards distrust observed in Figure 2.
+
+
+```{r cluster-heatmap, fig.cap="Figure 8. Trust profiles across institutions.", fig.width=8, fig.height=5}
+# Reshape for heatmap
+profile_long <- profile_means %>%
+  select(Label, Government, Parliament,
+         `Political parties`, Judiciary) %>%
+  pivot_longer(-Label, names_to = "Institution",
+               values_to = "Mean_trust")
+
+# Heatmap of mean trust by profile and institution
+ggplot(profile_long,
+       aes(x = Institution, y = Label, fill = Mean_trust)) +
+  geom_tile(color = "white", linewidth = 0.8) +
+  geom_text(aes(label = round(Mean_trust, 2)), size = 4) +
+  scale_fill_gradient(low = "#F6E8B1", high = "#D97B93",
+                      name = "Mean trust") +
+  labs(title = "Institutional trust profiles", x = NULL, y = NULL) +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        axis.text.x = element_text(angle = 20, hjust = 1))
+```
+
+Figure 8 visualises the same patterns: the colour gradient makes the
+contrast between profiles immediately visible, with political parties
+standing out as the institution that even the mixed-trust group tends to
+distrust.
+
+
+```{r cluster-vote, fig.cap="Figure 9. Turnout rate by trust profile."}
+# Compute turnout rate per trust profile
+turnout_by_profile <- cluster_data %>%
+  group_by(trust_profile) %>%
+  summarise(turnout = mean(vote_binary, na.rm = TRUE),
+            n = n(), .groups = "drop") %>%
+  left_join(profile_means %>% select(trust_profile, Label),
+            by = "trust_profile")
+
+# Bar plot of turnout by profile
+ggplot(turnout_by_profile,
+       aes(x = reorder(Label, turnout), y = turnout, fill = Label)) +
+  geom_col(width = 0.6) +
+  geom_text(aes(label = paste0(round(turnout * 100, 1), "%")),
+            vjust = -0.5, size = 3.5) +
+  scale_fill_manual(values = c("Low trust"   = "#F6E8B1",
+                                "Mixed trust" = "#E8A87C",
+                                "High trust"  = "#D97B93")) +
+  scale_y_continuous(labels = percent_format(), limits = c(0, 1)) +
+  labs(x = NULL, y = "Turnout rate",
+       title = "Electoral participation by trust profile") +
+  theme_minimal() +
+  theme(plot.title = element_text(face = "bold"),
+        legend.position = "none")
+```
+Figure 9 shows a graded relationship: turnout increases from **46.1%**
+in the low-trust group to **47.4%** in the mixed-trust group and
+**53.7%** in the high-trust group. The gap between low and high trust is
+roughly 7.6 percentage points. Notably, the mixed-trust group votes at a
+rate very close to the low-trust group rather than falling halfway
+between the two. This suggests that selective skepticism, trusting some
+institutions but not others, does not translate into substantially
+higher participation. It is broad, consistent trust across institutions
+that seems to matter most for turnout. Table 6 below tests whether this
+pattern holds after controlling for political interest, age, and country
+context.
+
+
+```{r cluster-logit}
+# Logistic regression with trust profiles instead of single trust variable
+model_cluster <- glm(
+  vote_binary ~ trust_profile + pol_interest + age + country,
+  data = cluster_data, family = binomial
+)
+
+# AMEs for trust profiles
+ame_cluster <- avg_slopes(model_cluster, variables = "trust_profile")
+
+# Display as clean table
+kable(
+  as.data.frame(ame_cluster) %>%
+    select(contrast, estimate, std.error, p.value,
+           conf.low, conf.high) %>%
+    mutate(estimate  = round(estimate, 3),
+           std.error = round(std.error, 4),
+           p.value   = ifelse(p.value < 0.001, "< 0.001",
+                              round(p.value, 3)),
+           conf.low  = round(conf.low, 3),
+           conf.high = round(conf.high, 3)),
+  col.names = c("Contrast", "AME", "SE", "p",
+                "95% CI lower", "95% CI upper"),
+  caption   = "Table 6. AMEs of trust profiles on turnout",
+  booktabs  = TRUE
+) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = "Controls: political interest, age, country FE.")
+```
+
+
+Table 6 confirms the pattern from Figure 9 after controlling for
+political interest, age, and country context. The reference category is
+the mixed-trust profile. Relative to this group, citizens in the
+**low-trust** profile are **4.0 percentage points** less likely to vote
+(*p* < 0.001), while those in the **high-trust** profile are **4.9
+percentage points** more likely to vote (*p* < 0.001). The total gap
+between low and high trust is therefore close to 9 percentage points,
+which is meaningful but smaller than the 21-point range associated with
+political interest.
+
+The key finding is that the mixed-trust group sits much closer to the
+low-trust group than to the high-trust group. If trust operated as a
+simple linear predictor, the mixed group would fall roughly halfway
+between the two extremes. Instead, it behaves almost like the low-trust
+group. This suggests that selective skepticism, trusting some
+institutions while distrusting others, does not boost turnout the way
+broad, consistent trust does. For the main model, this means the single
+linear trust variable captures the general direction of the relationship
+but slightly overstates the difference between low and moderate levels of
+trust.
+
+
+
+## Sensitivity Analysis
+
+The main analysis rests on several decisions: using complete cases,
+retaining age outliers, including both trust and age as controls, and
+estimating a logistic regression. Each of these choices is defensible,
+but none is the only option. This section checks whether the main
+finding, the positive association between political interest and turnout,
+survives when these choices are varied systematically.
+
+The specification curve uses the `specr` package to combine three
+dimensions of variation: the dataset (complete cases, MICE imputed,
+outliers removed), the set of control variables (with and without trust,
+age, or country fixed effects), and the model type (logistic regression
+vs. LPM). This produces **128 specifications** in total, each estimating
+the coefficient of political interest under a different combination of
+analytical choices.
+
+```{r sensitivity-prep, results='hide'}
+# 1. MICE imputed dataset (first of 5 imputed sets)
+impute_data <- clean2 %>%
+  select(vote_binary, trust, pol_interest, age, country)
+
+imp <- mice(impute_data, m = 5, method = "pmm",
+            seed = 123, printFlag = FALSE)
+
+mice_complete <- complete(imp, 1) %>%
+  filter(!is.na(vote_binary)) %>%
+  mutate(country = factor(country))
+
+# 2. No-outliers dataset (already created in outlier section)
+clean2_no_out$country <- factor(clean2_no_out$country)
+
+# 3. Stack all three datasets for specification curve
+df_cc  <- clean2_cc %>% mutate(dataset = "Complete cases")
+df_imp <- mice_complete %>% mutate(dataset = "MICE imputed")
+df_no  <- clean2_no_out %>% mutate(dataset = "No outliers")
+
+spec_data <- bind_rows(df_cc, df_imp, df_no)
+```
+
+```{r specr-run, fig.cap="Figure 10. Specification curve analysis.", fig.width=10, fig.height=8}
+# Custom logistic function compatible with specr
+logit_specr <- function(formula, data) {
+  glm(formula, data = data, family = binomial)
+}
+
+# Set up specification curve: vary model, controls, and dataset
+specs <- setup(
+  data     = spec_data,
+  y        = c("vote_binary"),
+  x        = c("pol_interest"),
+  model    = c("lm", "logit_specr"),
+  controls = c("trust + age + country",
+               "trust + age",
+               "trust + country",
+               "age + country"),
+  subsets  = list(dataset = unique(spec_data$dataset))
+)
+
+# Run all specifications and plot the curve
+results <- specr(specs)
+plot(results)
+```
+
+```{r specr-summary, results='hide'}
+# Summary statistics across all specifications
+spec_summary <- summary(results)
+```
+
+```{r specr-table}
+# Display key metrics as clean table
+kable(
+  data.frame(
+    Statistic = c("Number of specifications",
+                  "Median coefficient",
+                  "Min coefficient",
+                  "Max coefficient"),
+    Value     = c(nrow(as.data.frame(results)),
+                  round(median(as.data.frame(results)$estimate), 4),
+                  round(min(as.data.frame(results)$estimate), 4),
+                  round(max(as.data.frame(results)$estimate), 4))
+  ),
+  caption = "Table 7. Specification curve summary",
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+The results are unambiguous. Across all 128 specifications, the
+coefficient of political interest is **positive**, ranging from **0.066**
+to **0.386** (median: **0.191**). The two visible bands in the
+specification curve reflect the difference in scale between the LPM
+(lower band, around 0.07--0.09) and the logistic regression (upper band,
+around 0.30--0.35). This is expected: LPM coefficients are on the
+probability scale, while logit coefficients are on the log-odds scale.
+Both tell the same substantive story, just in different units.
+
+Within each band, the estimates barely move. Switching from complete
+cases to MICE imputed data or removing age outliers has almost no effect
+on the coefficient. Adding or dropping controls shifts it slightly, but
+never changes the direction or significance. The bottom panel of
+Figure 10 confirms this visually: the blue ticks are spread evenly across
+datasets and control sets, with no cluster of specifications producing
+outlying results.
+
+The main finding is robust. The positive association between political
+interest and turnout is not an artefact of how missing values were
+handled, whether outliers were retained, which controls were included,
+or which model was estimated.
+
+
+
+## Predictive Modelling
+
+While the previous sections focus on hypothesis testing, this predictive framework evaluates the out-of-sample accuracy of the model and the marginal gain of including a broader set of sociodemographic predictors.
+
+Although adopting a predictive perspective, it remains directly linked to the research question by assessing how well political interest and related variables help predict electoral participation. This provides a complementary evaluation of the empirical relevance of political interest beyond statistical significance alone.
+
+### Data Preparation
+
+```{r pred-data, results='hide'}
+# Add broader set of predictors and recode non-substantive responses as NA
+lasso_data2 <- clean2_cc |>
+  mutate(across(c(Q409, Q201A_2, Q201A_3, Q201A_5,
+                  Q501, Q501D, Q1002, Q1003, Q1005,
+                  Q1010, Q101),
+                ~ ifelse(. %in% c(97, 98, 99, 9999), NA, .))) |>
+  mutate(age = ifelse(age %in% c(97, 98, 99, 9999), NA, age)) |>
+  select(vote_binary, pol_interest, trust, age,
+         Q409, Q201A_2, Q201A_3, Q201A_5,
+         Q501, Q501D, Q1002, Q1003, Q1005,
+         Q1010, Q101, country) |>
+  na.omit()
+
+# Sample size and class balance
+n_pred <- nrow(lasso_data2)
+n_voted <- sum(lasso_data2$vote_binary == 1)
+n_abstained <- sum(lasso_data2$vote_binary == 0)
+```
+
+
+The predictive dataset adds trust in parliament and political parties,
+media consumption, sociodemographic characteristics, and economic
+perceptions to the core model. The final sample is N =
+**`r format(n_pred, big.mark = ",")`** (**`r n_voted`** voted,
+**`r n_abstained`** abstained).
+
+### Train/Test Split
+
+```{r train-test, results='hide'}
+# Stratified 80/20 split
+set.seed(42)
+train_index <- createDataPartition(factor(lasso_data2$vote_binary),
+                                   p = 0.8, list = FALSE)
+train_set <- lasso_data2[train_index, ]
+test_set  <- lasso_data2[-train_index, ]
+
+# Train logistic regression on training set
+model_pred <- glm(vote_binary ~ pol_interest + trust + age + country,
+                  data = train_set, family = "binomial")
+
+# Predict on test set with 0.5 threshold
+predicted_probs_test <- predict(model_pred, newdata = test_set,
+                                type = "response")
+predicted_factor <- factor(ifelse(predicted_probs_test > 0.5,
+                                  "Yes", "No"),
+                           levels = c("No", "Yes"))
+actual_factor <- factor(ifelse(test_set$vote_binary == 1, "Yes", "No"),
+                        levels = c("No", "Yes"))
+
+# Confusion matrix
+conf_matrix <- confusionMatrix(predicted_factor, actual_factor,
+                               positive = "Yes", mode = "everything")
+```
+
+```{r train-test-table}
+# Present confusion matrix metrics as a clean table
+perf_tt <- data.frame(
+  Metric = c("Accuracy", "Sensitivity (recall)", "Specificity",
+             "Precision", "F1 score"),
+  Value  = c(round(conf_matrix$overall["Accuracy"], 3),
+             round(conf_matrix$byClass["Sensitivity"], 3),
+             round(conf_matrix$byClass["Specificity"], 3),
+             round(conf_matrix$byClass["Precision"], 3),
+             round(conf_matrix$byClass["F1"], 3)),
+  row.names = NULL
+)
+
+# Display as formatted table
+kable(perf_tt,
+      caption = "Table 8. Train/test split performance (80/20, threshold = 0.5)",
+      booktabs = TRUE) %>%
+  kable_styling(full_width = FALSE)
+```
+
+The model achieves **68.1% accuracy**, well above the 49% a naive
+majority-class baseline would reach. Specificity (0.724) is higher than
+sensitivity (0.636), meaning the model is somewhat better at identifying
+non-voters than voters. This reflects the inherent difficulty of predicting turnout from survey
+data alone.
+
+### Cross-Validation
+
+```{r cross-val, results='hide'}
+# 10-fold cross-validation, optimising AUC
+train_control_cv <- trainControl(method = "cv", number = 10,
+                                  classProbs = TRUE,
+                                  summaryFunction = prSummary)
+
+set.seed(42)
+cv_model <- train(factor(vote_binary, labels = c("No", "Yes")) ~
+                    pol_interest + trust + age + country,
+                  data = lasso_data2, method = "glm",
+                  family = "binomial", metric = "AUC",
+                  trControl = train_control_cv)
+
+# Extract results for clean table display
+cv_results <- cv_model$results
+```
+
+```{r cv-table}
+# Display CV metrics as clean table
+kable(
+  data.frame(
+    Metric = c("AUC", "Precision", "Recall", "F1"),
+    Value  = round(c(cv_results$AUC[1], cv_results$Precision[1],
+                     cv_results$Recall[1], cv_results$F[1]), 3),
+    row.names = NULL
+  ),
+  caption = "Table 9. 10-fold cross-validation performance",
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+The cross-validated **AUC of 0.734** confirms moderate discriminative
+ability. Performance is consistent across folds, and the metrics are
+close to the single split, confirming that the earlier results were not
+an artefact of the partition.
+
+### Lasso Regression
+
+The lasso extends the model by incorporating a broader set of predictors
+and letting the penalty shrink uninformative coefficients toward zero.
+The penalty parameter lambda is selected through 10-fold cross-validation
+to maximise **AUC**. AUC is preferred over precision, recall, or F1
+because it evaluates the model's ability to rank voters above non-voters
+across *all possible* classification thresholds, rather than at a single
+arbitrary cutoff. This makes it a better fit for evaluating overall model performance than any single-threshold metric.
+
+```{r lasso, results='hide'}
+# Lambda grid for lasso (alpha = 1)
+lambda_grid <- expand.grid(alpha = 1,
+                           lambda = seq(0.001, 0.1, length = 100))
+
+# 10-fold CV, optimising AUC
+train_control_lasso <- trainControl(method = "cv", number = 10,
+                                    classProbs = TRUE,
+                                    summaryFunction = prSummary)
+
+# Fit lasso with broader set of predictors
+set.seed(42)
+lasso_model <- train(factor(vote_binary, labels = c("No", "Yes")) ~
+                       pol_interest + trust + age +
+                       Q409 + Q201A_2 + Q201A_3 + Q201A_5 +
+                       Q501 + Q501D + Q1002 + Q1003 + Q1005 +
+                       Q1010 + Q101 + country,
+                     data = lasso_data2, method = "glmnet",
+                     family = "binomial", metric = "AUC",
+                     tuneGrid = lambda_grid,
+                     trControl = train_control_lasso)
+
+# Extract best lambda and corresponding metrics
+best_lambda <- lasso_model$bestTune$lambda
+lasso_results <- lasso_model$results %>%
+  filter(lambda == best_lambda)
+```
+
+```{r lasso-performance}
+# Display lasso performance at optimal lambda
+kable(
+  data.frame(
+    Metric = c("Best lambda", "AUC", "Precision", "Recall", "F1"),
+    Value  = round(c(best_lambda,
+                     lasso_results$AUC, lasso_results$Precision,
+                     lasso_results$Recall, lasso_results$F), 3),
+    row.names = NULL
+  ),
+  caption = "Table 10. Lasso performance at optimal lambda",
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+```
+The optimal lambda is **0.001**, meaning very little shrinkage is
+applied. To see which variables drive this performance, Table 11 reports
+the non-zero coefficients at this lambda.
+
+```{r lasso-coefficients}
+# Extract non-zero lasso coefficients at optimal lambda
+lasso_coef_matrix <- coef(lasso_model$finalModel, s = best_lambda)
+lasso_coefs <- data.frame(
+  Variable    = rownames(lasso_coef_matrix),
+  Coefficient = as.numeric(lasso_coef_matrix)
+) %>%
+  # Remove intercept and country FE, keep only non-zero
+  filter(Coefficient != 0,
+         !grepl("Intercept|country", Variable)) %>%
+  mutate(Coefficient = round(Coefficient, 4)) %>%
+  arrange(desc(abs(Coefficient)))
+
+# Display retained predictors sorted by magnitude
+kable(lasso_coefs,
+      caption = "Table 11. Non-zero lasso coefficients (excluding country FE and intercept)",
+      booktabs = TRUE, row.names = FALSE) %>%
+  kable_styling(full_width = FALSE) %>%
+  footnote(general = paste0("Lambda = ", round(best_lambda, 3),
+                            ". Coefficients on the log-odds scale."))
+```
+
+Political interest (0.288) remains the strongest positive predictor
+after age, consistent with the inferential results. The largest
+coefficient overall belongs to Q501 (internet use, -0.361), followed by
+Q1002 (gender, -0.183) and Q501D (social media use, -0.167). Trust in
+political parties (Q201A_3) and trust in parliament (Q201A_2) are both
+retained with small negative coefficients, suggesting that once political
+interest and the other controls are accounted for, these trust dimensions
+add little independent predictive signal. 
+
+The lasso achieves an **AUC of 0.753**, compared to 0.734 for the core
+model. The broader variable set yields a modest improvement, confirming
+that the core predictors already capture most of what survey data can
+explain about individual turnout.
+
+One result worth noting is the large negative coefficient on internet
+use (Q501): respondents who use the internet more frequently are less
+likely to vote, even after controlling for age and political interest.
+This could reflect a generational pattern, where younger, more
+digitally connected citizens are also more disengaged from formal
+electoral participation, or it could point to a substitution effect,
+where online engagement replaces rather than complements offline
+political action. Either way, it suggests that the relationship between
+media consumption and turnout in the MENA region is more complex than
+a simple "more information, more participation" story.
+
+
+## Limitations
+
+Four limitations are worth acknowledging.
+
+First, the inferential model omits several predictors correlated with
+political interest, including education and media exposure. The lasso
+results, which show only marginal improvement when these variables are
+added, provide some reassurance, but the estimated effect of political
+interest should be read as an upper-bound rather than a precise causal
+effect.
+
+Second, the cross-sectional design precludes causal inference. The
+association between political interest and turnout is subject to reverse
+causality: participating in elections may itself reinforce engagement
+with politics over time.
+
+Third, self-reported turnout is known to be subject to social
+desirability bias: respondents tend to overreport having voted. If this
+bias is correlated with political interest, the estimated associations
+may be inflated. Without validated turnout records, which are unavailable
+for most countries in the sample, this concern cannot be directly
+addressed.
+
+Fourth, political interest is measured on a four-point ordinal scale and
+treated as linear and comparable across twelve countries. The intervals
+between response categories may not be equal, and the meaning of
+"interested in politics" likely varies across contexts with different
+levels of media freedom and political competition. Future work could
+address this through measurement equivalence testing before pooling
+responses across national samples.
+
+More broadly, these results reflect patterns within the MENA region
+specifically. The twelve countries share features such as relatively
+constrained political competition and varying degrees of media freedom
+that shape how political interest and trust relate to turnout. Whether
+the same patterns hold in other world regions is an open question.
+
+
+
+## Conclusion
+
+The evidence presented in this report shows that in the Arab world, motivational engagement, how closely citizens follow politics, is a stronger predictor of electoral participation than institutional legitimacy. While institutional trust remains statistically significant, its effect is clearly secondary. Substantively, a one unit increase in political interest is associated with a 7.1 percentage point increase in the probability of voting, roughly three times the effect of institutional trust (2.3 points). In other words, "knowing" the stakes of the political game appears more decisive than "believing" in its players.
+
+This relationship is robust across the MENA region. Although the interaction model reveals some heterogeneity, with stronger effects in Morocco and Lebanon and weaker ones in Sudan and Jordan, the direction of the association remains consistently positive. The cluster analysis adds an important nuance: electoral participation increases substantially only among citizens who express broad and consistent trust across institutions. By contrast, individuals with mixed or selective trust behave much more like low trust citizens, suggesting that partial legitimacy is insufficient to mobilize voters.
+
+The stability of these findings across 128 alternative specifications further reinforces the central role of political interest. Taken together, the results point to a clear conclusion: in the MENA region, paying attention to politics is a more powerful predictor of turnout than trusting political institutions.
+
+Future research should build on this by using longitudinal data to better address issues of endogeneity and causality, while also incorporating additional mechanisms such as social networks, media exposure, and party identification. Ultimately, these findings suggest that increasing electoral participation may depend less on improving institutional image alone, and more on fostering environments in which citizens perceive political engagement as relevant, accessible, and meaningful.
+
+## References
+
+Arab Barometer. (2022). *Arab Barometer Wave VII: Technical Report
+(2021--2022).* Arab Barometer. https://www.arabbarometer.org
+
+Norris, P. (2011). *Democratic deficit: Critical citizens revisited.*
+Cambridge University Press.
+
+Van Buuren, S. (2018). *Flexible imputation of missing data* (2nd ed.).
+CRC Press. https://stefvanbuuren.name/fimd/
+
+Verba, S., Schlozman, K. L., & Brady, H. E. (1995). *Voice and equality:
+Civic voluntarism in American politics.* Harvard University Press.
