@@ -1,0 +1,851 @@
+---
+title: "Trust in Government and Electoral Participation in the Arab World: Evidence from the Arab Barometer"
+author: "Houda ES-SQALLI"
+date: "16 February 2026"
+
+format:
+  html:
+    toc: true
+    toc-depth: 3
+    number-sections: true
+    toc-location: right
+    embed-resources: true
+---
+
+```{=html}
+<style>
+p {
+  text-align: justify;
+}
+</style>
+```
+
+## Research Question and Motivation
+
+Trust in government is a central component of institutional legitimacy. In this report, trust is understood as citizens’ subjective assessment of the government’s reliability and its ability to act in the public interest. Existing research generally suggests that higher levels of institutional trust are associated with greater electoral participation (Levi & Stoker, 2000; Norris, 2011).
+
+In the Arab world, however, this relationship may be less straightforward, as electoral participation occurs in political contexts where institutional legitimacy is often contested.
+
+This report therefore asks: **Do individuals who report having voted express higher levels of trust in the national government than those who abstained?** Using data from Wave VII of the Arab Barometer, the analysis examines this association across twelve Arab countries.
+
+To test this hypothesis, I estimate a linear probability model (OLS) in which turnout is regressed on institutional trust, controlling for age and including country fixed effects. Coefficients are interpreted as average percentage-point changes in the probability of reporting having voted (Verba, Schlozman & Brady, 1995).
+
+
+## Hypothesis
+
+Building on research linking institutional trust to political participation, this report formulates the following hypothesis:
+
+**H1: Individuals with higher levels of trust in the national government are more likely to report having voted in the most recent national election.**
+
+This expectation follows the idea that institutional trust can reduce the perceived costs of participation and strengthen the belief that elections are meaningful channels of political influence (Levi & Stoker, 2000; Norris, 2011). Citizens who view governing institutions as reliable and responsive may therefore be more inclined to engage electorally.
+
+At the same time, the trust–turnout relationship may be less straightforward in the Arab world, where voting can also reflect protest, strategic behavior, or social pressure rather than institutional support (Hirschman, 1970). The empirical association thus remains theoretically ambiguous and requires systematic examination across countries.
+
+This hypothesis concerns association, not causation.
+
+## Data Source
+
+This analysis uses data from Wave VII of the Arab Barometer (2021–2022), a comparative survey conducted across twelve countries in the Middle East and North Africa: Algeria, Egypt, Iraq, Jordan, Kuwait, Lebanon, Libya, Mauritania, Morocco, Palestine, Sudan, and Tunisia. The data were collected using stratified probabilistic sampling, primarily through face-to-face computer-assisted interviews (CAPI) (Arab Barometer, Technical Report).
+
+National sample sizes generally range from approximately 1,300 to 2,500 respondents depending on the country.
+
+Pooling countries in this way makes it possible to examine the average association between trust in government and electoral participation across the region. To account for contextual differences between national settings, the analysis includes country fixed effects in the statistical models.
+
+### Variables Used
+
+-   **Trust in the national government (Q201A_1):** an ordinal variable measured on a four-point scale,ranging from **1 = “a great deal of trust”** to **4 = “no trust at all.”** For ease of interpretation, the scale is reversed in the analysis so that higher values correspond to higher levels of trust.
+
+-   **Electoral participation (Q301A):** a binary variable indicating whether the respondent reports having voted in the most recent national election (1 = voted, 0 = did not vote).
+
+In the analysis, electoral participation constitutes the main dependent variable, while trust in government is the central explanatory variable. Control variables, such as age and cross-national variation, are also taken into account.
+
+Responses coded as “Don’t know” or “Refused” were excluded from the analysis (see [Data Cleaning](#data-cleaning)).
+
+## Data Preparation
+
+This section describes the main steps used to prepare the Arab Barometer dataset for the analysis.
+
+```{r setup, echo=TRUE, message=FALSE, warning=FALSE}
+# Set a random seed to ensure reproducibility
+set.seed(123)
+
+# Load the packages required for the analysis
+library(dplyr)       # data manipulation
+library(knitr)       # table formatting in Quarto
+library(ggplot2)     # data visualisation
+library(kableExtra)  # improved table display
+library(broom)       # regression output formatting
+library(lmtest)     # for coeftest()
+library(sandwich)   # for robust standard errors
+
+# Display code while suppressing unnecessary messages and warnings
+knitr::opts_chunk$set(
+  echo = TRUE,
+  message = FALSE,
+  warning = FALSE
+)
+
+
+# Consistent color palette across all figures
+turnout_colors <- c(
+  "Abstained" = "#F6E8B1",
+  "Voted"     = "#D97B93"
+)
+
+# Global theme for the entire report
+theme_report <- theme_minimal() +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 20, hjust = 1)
+  )
+
+# Consistent trust color
+trust_color <- "grey70"
+```
+
+```{r}
+# Load the Arab Barometer Wave VII dataset (stored locally)
+data <- read.csv("AB7_ENG_Release_Version6.csv", stringsAsFactors = FALSE)
+```
+
+The dataset is stored locally in the same directory as the Quarto file to ensure reproducibility.
+
+## Data Cleaning {#data-cleaning}
+
+Responses coded as *“Don’t know”* (98) or *“Refused”* (99) were excluded from the analytic sample. The analysis is therefore restricted to respondents with valid information on both electoral participation (Q301A) and trust in the national government (Q201A_1).
+
+The resulting dataset corresponds to a complete-case sample for the main variables of interest.
+
+```{r cleaning}
+# Number of observations before cleaning
+n_before <- nrow(data)
+
+# Construct analytic dataset (complete-case on turnout and trust)
+clean <- data %>%
+  
+  # Keep only valid responses for turnout and trust
+  filter(
+    Q301A %in% c(1, 2),
+    Q201A_1 %in% c(1, 2, 3, 4),
+    !is.na(Q1001),     # keep only respondents with age
+    !is.na(COUNTRY)    # keep only respondents with country
+  ) %>%
+  
+  mutate(
+    # Outcome variable: turnout (factor for descriptives)
+    voted = factor(
+      ifelse(Q301A == 1, "Voted", "Abstained"),
+      levels = c("Abstained", "Voted")
+    ),
+
+    # Outcome variable: turnout (binary for regression)
+    vote_binary = ifelse(Q301A == 1, 1, 0),
+
+    # Main predictor: reverse trust scale so higher values = more trust
+    trust = 5 - Q201A_1,
+
+    # Trust categories (original wording, ordered low → high for plots)
+    trust_label = factor(
+  trust,
+  levels = c(1, 2, 3, 4),
+  labels = c(
+    "No trust at all",
+    "Not a lot of trust",
+    "Quite a lot of trust",
+    "A great deal of trust"
+  ),
+  ordered = TRUE
+),
+
+    # Control variable: age
+    age = as.numeric(Q1001),
+
+    # Country fixed effects
+    country = factor(COUNTRY)
+  )
+
+# Number of observations after cleaning
+n_after <- nrow(clean)
+
+# Percentage excluded
+percent_removed <- round((n_before - n_after) / n_before * 100, 1)
+
+# Summary table of the cleaning process
+cleaning_summary <- data.frame(
+  "N before" = n_before,
+  "N after" = n_after,
+  "% excluded" = percent_removed,
+  check.names = FALSE
+)
+
+kable(
+  cleaning_summary,
+  caption = "Table 1. Sample size before and after data cleaning"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+
+Before cleaning, the dataset includes **N = 26,154** observations. After excluding missing or non-informative responses, the final analytic sample contains **N = 20,034**, corresponding to a reduction of **6,120 observations (-23.4%)**. This relatively large proportion of excluded cases should be kept in mind, as non-response may introduce bias if it is not random.
+
+## Sample Characteristics
+
+This section describes the analytic sample after data cleaning. And because the original coding assigns lower values to higher trust, I reverse the trust scale so that larger values consistently indicate greater institutional trust throughout the report.
+
+```{r sample-description}
+# Sample size and turnout distribution
+turnout_dist <- clean %>%
+  count(voted) %>%
+  mutate(percent = round(n / sum(n) * 100, 1))
+
+kable(
+  turnout_dist,
+  caption = "Table 2. Self-reported electoral participation in the analytic sample"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+The final analytic sample includes **N = `r sum(turnout_dist$n)`** respondents. Because turnout is based on self-reports, it may be affected by social desirability bias, potentially inflating participation rates.
+
+For instance, official turnout in Morocco’s 2021 legislative elections was approximately 50.18 % according to final figures released by Morocco’s Ministry of Interior (2021), which provides a useful benchmark for assessing the realism of self-reported participation rates in the survey.
+
+```{r}
+# Distribution of trust in government
+trust_dist <- clean %>%
+  count(trust_label) %>%
+  mutate(percent = round(n / sum(n) * 100, 1))
+
+kable(
+  trust_dist,
+  caption = "Table 3. Distribution of trust in the national government"
+) %>%
+  kable_styling(full_width = FALSE)
+
+# Share reporting no trust at all
+no_trust <- trust_dist %>%
+  filter(trust_label == "No trust at all") %>%
+  pull(percent)
+```
+
+A substantial share of respondents report low institutional trust: approximately **`r no_trust`%** indicate having *no trust at all* in the national government. Overall, the distribution suggests a relatively high level of institutional distrust in the analytic sample.
+
+Trust is measured on a four-point ordinal scale and has been recoded so that higher values correspond to higher levels of trust.
+
+The next section examines whether trust differs systematically between individuals who voted and those who abstained.
+
+## Descriptive Statistics
+
+Before turning to inferential models, I first describe the distribution of the main outcome (turnout) and the key explanatory variable (trust in government).
+
+### Distribution of Electoral Participation (Outcome)
+
+**Figure 1** displays the distribution of self-reported electoral participation in the analytic sample. Because turnout constitutes the outcome variable in this report, it is important to first document how many respondents report voting versus abstaining before examining its relationship with institutional trust.
+
+```{r fig1-turnout, fig.cap="Figure 1. Distribution of self-reported electoral participation in the analytic sample. Bars show the proportion of respondents who reported voting versus abstaining."}
+# ------------------------------------------------------------
+# Purpose:
+#   Describe the outcome variable used throughout the analysis:
+#   whether respondents report having voted in the most recent
+#   national election.
+# ------------------------------------------------------------
+
+# Step 1: Compute the proportion of respondents in each turnout category
+turnout_dist <- clean %>%
+  count(voted) %>%
+  mutate(percent = n / sum(n))
+
+# Step 2: Store exact percentages for interpretation in the text
+pct_voted <- round(turnout_dist$percent[turnout_dist$voted == "Voted"] * 100, 1)
+pct_abstained <- round(turnout_dist$percent[turnout_dist$voted == "Abstained"] * 100, 1)
+
+# Step 3: Plot the distribution as a bar chart
+ggplot(turnout_dist, aes(x = voted, y = percent, fill = voted)) +
+  geom_col(width = 0.7) +
+  scale_fill_manual(values = turnout_colors) +
+  scale_y_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Self-Reported Electoral Participation",
+    x = "Reported voting behavior",
+    y = "Proportion of respondents",
+    fill = "Turnout"
+  ) +
+  theme_report
+```
+
+```{r turnout-range, echo=TRUE, results="hide"}
+
+# Compute the range of reported turnout rates across countries
+range_turnout <- clean %>%
+  group_by(country) %>%
+  summarise(turnout = mean(vote_binary, na.rm = TRUE) * 100) %>%
+  summarise(
+    min_turnout = min(turnout),
+    max_turnout = max(turnout)
+  )
+
+# Store values for inline interpretation
+min_t <- round(range_turnout$min_turnout, 1)
+max_t <- round(range_turnout$max_turnout, 1)
+```
+
+**Figure 1** shows that self-reported turnout is relatively evenly split between respondents who declare having voted (**`r pct_voted`%**) and those who report abstaining (**`r pct_abstained`%**). As in most survey-based studies of electoral participation, these figures may overestimate actual turnout due to *social desirability bias*, whereby some individuals are more likely to report voting than non-participation.
+
+Reported turnout also varies substantially across countries in the analytic sample, ranging from approximately **`r min_t`%** to **`r max_t`%**. This cross-national dispersion likely reflects both differences in electoral context and potential reporting biases, and it should be kept in mind when interpreting the subsequent association between institutional trust and voting behavior.
+
+
+### Distribution of Trust in the National Government (Predictor)
+
+```{r trust-distribution}
+# Ensure trust categories are ordered from low to high
+clean$trust_label <- factor(
+  clean$trust_label,
+  levels = c(
+    "No trust at all",
+    "Not a lot of trust",
+    "Quite a lot of trust",
+    "A great deal of trust"
+  )
+)
+```
+
+**Figure 2** describes the distribution of trust in the national government, the main explanatory variable in the analysis. Trust is measured on a four-point ordinal scale ranging from no trust at all to a great deal of trust.
+
+```{r fig2-trust, fig.cap="Figure 2. Distribution of trust in the national government."}
+# ------------------------------------------------------------
+# Purpose:
+#   Describe the main predictor variable: institutional trust.
+#   Trust categories follow the original Arab Barometer wording.
+# ------------------------------------------------------------
+
+# Compute exact proportions in each trust category (for interpretation)
+trust_dist <- clean %>%
+  count(trust_label) %>%
+  mutate(percent = n / sum(n))
+
+# Store key percentages for the text
+pct_no_trust <- round(trust_dist$percent[trust_dist$trust_label == "No trust at all"] * 100, 1)
+pct_great_trust <- round(trust_dist$percent[trust_dist$trust_label == "A great deal of trust"] * 100, 1)
+
+# Plot distribution of trust
+ggplot(clean, aes(x = trust_label)) +
+  geom_bar(fill = "grey70") +
+  labs(
+    title = "Distribution of Trust in the National Government",
+    x = "Level of trust in the national government",
+    y = "Number of respondents"
+  ) +
+  theme_report
+```
+
+Figure 2 indicates that institutional trust is generally low in the analytic sample. In particular, **`r pct_no_trust`%** of respondents report having *no trust at all* in the national government, whereas only **`r pct_great_trust`%** express *a great deal of trust*.
+
+The distribution is strongly skewed toward distrust, suggesting that confidence in government institutions remains limited across the surveyed countries.
+
+### Trust in Government by Electoral Participation (Initial Descriptive Comparison)
+
+To provide a first descriptive check of Hypothesis H1, **Table 4**compares average trust levels between respondents who reported voting and those who abstained.
+
+```{r trust-by-vote-table}
+# ------------------------------------------------------------
+# Table 4. Average Trust in Government by Electoral Participation
+#
+# Purpose:
+#   Compare mean levels of trust between voters and non-voters.
+# ------------------------------------------------------------
+
+desc_table <- clean %>%
+  group_by(voted) %>%
+  summarise(
+    Sample_size   = n(),
+    Mean_trust    = round(mean(trust), 2),
+    SD_trust      = round(sd(trust), 2),
+    Median_trust  = median(trust)
+  )
+
+kable(
+  desc_table,
+  caption = "Table 4. Average Trust in the National Government by Electoral Participation"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+Table 4 shows that respondents who reported voting display slightly higher trust on average (**M = 2.01**) than those who abstained (**M = 1.91**). This difference is consistent with Hypothesis H1, although the magnitude remains modest: it corresponds to an average gap of only **0.10 points** on a four-point trust scale.
+
+Importantly, this descriptive comparison does not indicate whether the observed difference is statistically distinguishable from zero in the broader population, nor does it account for other factors such as age or cross-national variation.
+
+### Visual Descriptive Check of Hypothesis H1
+
+**Figure 3** visualizes turnout proportions across categories of trust, providing a purely descriptive assessment of whether higher institutional trust corresponds to greater reported participation.
+
+```{r fig3-turnout-trust, fig.cap="Figure 3. Reported turnout across trust categories."}
+# ------------------------------------------------------------
+# Purpose:
+#   Visual descriptive check of Hypothesis H1 by examining whether
+#   turnout increases with higher institutional trust.
+#
+# Visualization:
+#   Bars represent the proportion of respondents who voted or
+#   abstained within each trust category.
+# ------------------------------------------------------------
+
+ggplot(clean, aes(x = trust_label, fill = voted)) +
+  geom_bar(position = "fill") +
+  labs(
+    x = "Trust in the National Government",
+    y = "Proportion of Respondents",
+    fill = "Electoral Participation"
+  ) +
+  
+  # Custom color palette (soft yellow + muted pink)
+  scale_fill_manual(
+    values = c(
+      "Abstained" = "#F6E8B1",  # soft warm yellow (not neon)
+      "Voted"     = "#D97B93"   # muted dusty pink
+    )
+  ) +
+  
+  labs(
+    title = "Reported Turnout by Trust in the National Government",
+    x = "Level of trust in the national government",
+    y = "Proportion of respondents",
+    fill = "Turnout"
+  ) +
+  
+  # Aesthetic improvements (clean, professor-friendly)
+  theme_minimal() +
+  theme(
+    legend.position = "top",
+    plot.title = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 20, hjust = 1)
+  )
+```
+
+**Figure 3** suggests a modest descriptive trend: respondents expressing higher levels of trust are slightly more likely to report voting, whereas abstention is somewhat more common among those reporting no trust at all. Overall, the descriptive evidence lends initial support to Hypothesis H1.
+
+However, descriptive patterns do not provide information about statistical uncertainty or robustness. The next section therefore evaluates this association using inferential models that account for age and cross-national differences.
+
+## Limits of descriptive statistics
+
+Descriptive analyses are useful for identifying patterns in the sample, but they provide no measure of *statistical uncertainty*. The differences observed between voters and non-voters could partly reflect random sampling variation and may not necessarily generalize to the broader population.
+
+In addition, electoral participation is measured through self-reports and may therefore be affected by social desirability bias and measurement error. Finally, trust in government is captured using a four-category ordinal scale, which limits the precision with which it can be treated as a fully continuous measure.
+
+Reported turnout in survey data often exceeds official electoral participation rates, suggesting possible over-reporting due to social desirability bias. Turnout should therefore be interpreted as self-reported participation rather than validated voting behavior.
+
+For these reasons, the next section relies on inferential statistical models to formally test the association between institutional trust and turnout, while accounting for relevant control variables.
+
+## Inferential Analysis: Testing Hypothesis H1
+
+The descriptive statistics presented above suggest a modest positive association between trust in government and self-reported electoral participation. However, descriptive comparisons alone cannot assess whether this relationship is statistically distinguishable from zero in the broader population.
+
+This section therefore uses inferential statistics to formally test Hypothesis H1:
+
+**H1: Individuals who report higher trust in the national government are more likely to report having voted.**
+
+## Statistical model
+
+The dependent variable is **electoral turnout**, coded as a binary indicator:
+
+- `vote_binary = 1` if the respondent reports having voted  
+- `vote_binary = 0` otherwise  
+
+Because the outcome is dichotomous, the standard modeling strategy would be logistic regression. However, the main analysis estimates a **Linear Probability Model (LPM)**, which applies ordinary least squares to a binary dependent variable.
+
+The advantage of the LPM is interpretability: coefficients can be read directly as **percentage-point changes in the probability of voting**. For example, a coefficient of 0.03 corresponds to a 3-point increase in turnout probability.
+
+A known limitation is that errors are heteroskedastic by construction when the dependent variable is binary. Therefore, all models report **heteroskedasticity-robust standard errors (HC1)**.
+
+
+## Control variables and identification strategy
+
+Two key factors may confound the relationship between trust and turnout:
+
+- **Age**, since electoral participation is strongly structured by the life cycle.  
+  Across democracies worldwide, younger citizens consistently report lower turnout
+  rates than older cohorts, making youth abstention a well-established feature of
+  electoral behavior (Franklin, 2004; Blais, 2006). Moreover, institutional trust may also vary systematically across generations,
+  failing to adjust for age could bias the estimated association between trust
+  and voting.
+- **Country context**, because the Arab Barometer pools respondents from multiple
+  national settings with very different baseline turnout levels and institutional
+  environments.
+
+To ensure that the estimated trust–turnout association is not driven by
+cross-national differences, the models include **country fixed effects**. This
+means the coefficient on trust is identified from **within-country comparisons**
+between individuals living in the same national context, rather than being driven
+by differences across political systems.
+
+
+### Model 1: Baseline association between trust and turnout
+
+This first model provides a baseline test of Hypothesis H1 by estimating the
+unconditional relationship between trust in the national government and
+self-reported turnout.
+
+Turnout is coded as a binary outcome:
+
+- `vote_binary = 1` if the respondent reports having voted  
+- `vote_binary = 0` otherwise  
+
+Because the dependent variable is dichotomous, the model is estimated as a
+**Linear Probability Model (LPM)**. Coefficients can therefore be interpreted
+directly as percentage-point changes in the probability of voting.
+
+#### Estimation
+
+```{r model1}
+# Model 1: Baseline LPM
+model1 <- lm(vote_binary ~ trust, data = clean)
+
+# Robust standard errors (HC1)
+coeftest(model1, vcov = vcovHC(model1, type = "HC1"))
+
+# Extract R²
+r2_model1 <- summary(model1)$r.squared
+```
+Table 5 reports the estimated coefficients from Model 1, with robust standard
+errors (HC1).
+
+### Regression results (Model 1)
+
+```{r}
+# Robust SEs (HC1)
+robust_se <- sqrt(diag(vcovHC(model1, type = "HC1")))
+
+# Build regression table
+table_model1 <- tidy(model1) %>%
+  mutate(
+    `Robust SE` = robust_se,
+    estimate    = round(estimate, 3),
+    `Robust SE` = round(`Robust SE`, 3),
+    p.value     = ifelse(p.value < 0.001, "<0.001",
+                         round(p.value, 3)),
+    term = case_when(
+      term == "(Intercept)" ~ "Intercept",
+      term == "trust"       ~ "Trust in government"
+    )
+  ) %>%
+  select(term, estimate, `Robust SE`, p.value)
+
+# Display journal-style table
+kable(
+  table_model1,
+  col.names = c("Term", "Estimate", "Robust Std. Error", "P-value"),
+  caption   = "Table 5. Baseline linear probability model predicting turnout (Model 1)",
+  booktabs  = TRUE,
+  align     = "lccc"
+) %>%
+  kable_styling(
+    full_width = FALSE,
+    position   = "center",
+    font_size  = 12
+  )
+```
+#### Interpretation
+Table 5 shows a positive and statistically significant association between trust
+in the national government and self-reported turnout. Using heteroskedasticity-
+robust standard errors, a one-point increase on the four-point trust scale is
+associated with an approximately **2.4 percentage-point** increase in the
+probability of reporting having voted ($\beta = 0.024$, $p < 0.001$).
+
+The explanatory power of the model is very limited (R² = `r round(r2_model1, 3)`),
+which is common in individual-level turnout models.
+
+Substantively, this indicates that trust in government alone explains only a very small
+fraction of the individual variation in turnout. This suggests that many other
+determinants of voting behavior — such as education, political interest, or mobilization are not captured in this simple specification.
+
+Overall, this baseline result provides preliminary support for Hypothesis H1,
+although the estimated association remains substantively modest.
+
+This association should be interpreted as descriptive rather than causal.
+
+### Model diagnostics (Model 1)
+
+```{r, fig.cap="Figure 4. Residuals vs fitted values for the baseline linear probability model (Model 1)."}
+# Residuals vs fitted values (heteroskedasticity)
+plot(model1, which = 1)
+```
+
+Figure 4 illustrates the residual structure of the baseline linear probability model.
+As expected with a binary dependent variable, heteroskedasticity is inherent,
+which motivates the use of robust (HC1) standard errors throughout.
+
+### Model 2: Controlling for age and country fixed effects
+
+Model 2 extends the baseline specification by adjusting for age and country-level
+differences in electoral participation. Turnout is strongly structured by the
+life cycle: younger citizens consistently participate less than older cohorts,
+and institutional trust may also vary systematically across generations.
+Controlling for age therefore helps reduce potential confounding in the
+trust–turnout relationship.
+
+In addition, the Arab Barometer pools respondents from multiple national
+contexts with very different baseline turnout rates and institutional
+environments. Model 2 therefore includes **country fixed effects**, meaning that
+the coefficient on trust is identified from **within-country comparisons**
+between individuals living in the same national setting.
+
+Robust standard errors (HC1) are reported throughout.
+
+#### Estimation
+```{r model2}
+# Model 2: LPM with controls and country fixed effects
+model2 <- lm(vote_binary ~ trust + age + factor(country), data = clean)
+
+# Robust standard errors (HC1)
+coeftest(model2, vcov = vcovHC(model2, type = "HC1"))
+
+# Extract R²
+r2_model2 <- summary(model2)$r.squared
+```
+Table 6 reports the main regression results from Model 2. Country fixed effects
+are included in the estimation but omitted from the table for readability.
+
+### Regression results (Model 2)
+```{r table6}
+# Robust SEs (HC1)
+robust_se2 <- sqrt(diag(vcovHC(model2, type = "HC1")))
+
+# Build clean regression table (key coefficients only)
+table_model2 <- tidy(model2) %>%
+  filter(term %in% c("trust", "age")) %>%
+  mutate(
+    `Robust SE` = round(robust_se2[term], 3),
+    estimate    = round(estimate, 3),
+    p.value     = ifelse(p.value < 0.001, "<0.001",
+                         round(p.value, 3)),
+    term = case_when(
+      term == "trust" ~ "Trust in government",
+      term == "age"   ~ "Age (years)"
+    )
+  ) %>%
+  select(term, estimate, `Robust SE`, p.value)
+
+# Display journal-style table
+kable(
+  table_model2,
+  col.names = c("Term", "Estimate", "Robust Std. Error", "P-value"),
+  caption   = "Table 6. Linear probability model predicting turnout (Model 2)",
+  booktabs  = TRUE
+) %>%
+  kable_styling(
+    full_width = FALSE,
+    position   = "center",
+    font_size  = 12
+  )
+```
+### Interpretation 
+
+Model 2 shows that trust in government remains positively and statistically
+significantly associated with self-reported turnout after adjusting for age and
+country fixed effects ($\beta = 0.033$, $p < 0.001$).
+
+In the linear probability framework, this implies that a one-point increase on
+the four-point trust scale is associated with an approximately **3.3 percentage-
+point increase** in the probability of reporting having voted.
+
+Model fit remains modest (R² = `r round(r2_model2, 3)`), which is common in
+individual-level turnout models.
+
+This value suggests that, even after controlling for age and country fixed effects,
+most of the variation in self-reported turnout remains unexplained, highlighting the
+multifactorial nature of electoral participation.
+
+Because country fixed effects are included, this estimate is identified from
+within-country comparisons rather than cross-national differences.
+
+Overall, these results support Hypothesis H1, but they should be interpreted as
+an association rather than evidence of a causal effect.
+
+### Model diagnostics (Model 2)
+```{r, fig.cap="Figure 5. Residuals vs Fitted Values (Model 2)"}
+# Residuals vs fitted values (linearity / heteroskedasticity)
+plot(model2, which = 1)
+```
+Figure 5 illustrates the expected heteroskedastic residual pattern in a linear
+probability model. Because turnout is a binary dependent variable, residual
+normality is not a substantively relevant assumption. The main concern is
+heteroskedasticity, which is inherent when modeling a dichotomous outcome with
+OLS. Therefore, all reported standard errors are heteroskedasticity-robust
+(HC1).
+
+In addition, the logistic regression robustness check confirms that the
+substantive conclusions do not depend on the LPM specification.
+
+
+### Robustness check: Logistic regression
+
+Because turnout is a binary outcome, I also estimate a logistic regression model as a robustness check. The results are substantively similar: trust remains positively and statistically significantly associated with the probability of reporting having voted. This suggests that the main conclusions are not driven by the linear probability specification.
+
+```{r logit-table}
+# Logistic regression robustness check
+logit2 <- glm(
+  vote_binary ~ trust + age + factor(country),
+  data = clean,
+  family = binomial
+)
+
+# Build clean regression table (Odds Ratios only)
+tbl_logit <- tidy(logit2) %>%
+  filter(term %in% c("trust", "age")) %>%
+  mutate(
+    Odds_Ratio = round(exp(estimate), 2),
+    p.value = ifelse(p.value < 0.001, "<0.001", round(p.value, 3)),
+
+    term = case_when(
+      term == "trust" ~ "Trust in government",
+      term == "age"   ~ "Age (years)"
+    )
+  ) %>%
+  select(term, Odds_Ratio, p.value)
+
+# Display clean table
+kable(
+  tbl_logit,
+  col.names = c("Predictor", "Odds Ratio", "P-value"),
+  caption = "Table 7. Logistic regression robustness check (odds ratios)",
+  booktabs = TRUE
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+Accordingly, the LPM provides a reasonable approximation for interpreting effect
+sizes in percentage-point terms. The logistic regression confirms the same
+substantive conclusion, indicating that the positive association is robust to
+model specification.
+
+### Robustness check: Trust as an ordinal categorical predictor
+
+Trust is measured on a four-point ordinal scale. Treating it as continuous in the LPM assumes equal distances between categories, which may be imperfect. As an additional robustness check, I estimate a model treating trust as a categorical predictor. This allows the effect of each trust level to be compared without imposing linearity.
+
+```{r model3-ordinal}
+# Step 1: Recreate trust as a fully unordered categorical variable
+# (this prevents R from using polynomial contrasts such as .L, .Q, .C)
+clean$trust_cat <- factor(
+  as.character(clean$trust_label),
+  levels = c(
+    "No trust at all",
+    "Not a lot of trust",
+    "Quite a lot of trust",
+    "A great deal of trust"
+  ),
+  ordered = FALSE
+)
+
+# Step 2: Set the baseline (reference) category for interpretation
+# All coefficients will be interpreted relative to "No trust at all"
+clean$trust_cat <- relevel(clean$trust_cat, ref = "No trust at all")
+
+# Step 3: Estimate a logistic regression model
+# Controls: age + country fixed effects
+model3 <- glm(
+  vote_binary ~ trust_cat + age + factor(country),
+  data = clean,
+  family = binomial
+)
+
+# Step 4: Display results in a clean regression table
+# - Convert coefficients into odds ratios for easier interpretation
+# - Format p-values properly (avoid showing "0")
+tbl_model3 <- tidy(model3) %>%
+  filter(grepl("trust_cat", term)) %>%
+  mutate(
+    Odds_Ratio = round(exp(estimate), 2),
+    p.value = ifelse(p.value < 0.001, "<0.001", round(p.value, 3)),
+    estimate = round(estimate, 3),
+    std.error = round(std.error, 3),
+
+    # Clean term names for readability in the table
+    term = case_when(
+      term == "trust_catNot a lot of trust" ~ "Not a lot of trust",
+      term == "trust_catQuite a lot of trust" ~ "Quite a lot of trust",
+      term == "trust_catA great deal of trust" ~ "A great deal of trust"
+    )
+  ) %>%
+  select(term, Odds_Ratio, p.value)
+
+# Step 5: Print the final table
+kable(
+  tbl_model3,
+  caption = "Table 8. Logistic regression treating trust as a categorical predictor (reference: No trust at all)"
+) %>%
+  kable_styling(full_width = FALSE)
+```
+
+Table 8 re-estimates the relationship between institutional trust and turnout by treating trust as a categorical variable rather than imposing a linear structure. Respondents reporting *no trust at all* serve as the reference category.
+
+Relative to this group, individuals expressing higher levels of trust are significantly more likely to report having voted. In particular, those reporting *quite a lot of trust* exhibit substantially higher odds of turnout (OR = 1.45, p < 0.001). Respondents reporting *a great deal of trust* also show increased participation odds (OR = 1.36, p < 0.001).
+
+For instance, an odds ratio of 1.45 implies that respondents reporting *quite a lot of trust* have approximately 45% higher odds of voting compared to those reporting no trust at all, holding age and country constant.
+
+Overall, these findings show that the positive association between institutional trust and self-reported turnout remains when trust is modeled using discrete categories in a logistic regression framework. This suggests that the relationship is not solely an artifact of imposing linearity on the four-point scale.
+
+
+### Conclusion: Does the evidence support H1?
+
+Across both the linear probability and logistic regression specifications,
+institutional trust is consistently associated with a higher likelihood of
+reporting having voted. 
+
+Taken together, the regression evidence supports Hypothesis H1,
+although the estimated relationship is modest in substantive terms and should
+be interpreted as an association rather than a causal effect.
+
+
+### Limitations and scope
+
+Several limitations should be considered when interpreting these findings.
+
+- **Self-reported turnout** may be affected by social desirability bias, leading
+  respondents to overstate electoral participation.
+
+- The analysis is **observational**, so the estimated relationships cannot be
+  interpreted causally and may reflect reverse causation or unobserved
+  confounding factors.
+
+- The analysis includes only a limited set of individual-level controls (age and
+  country fixed effects). Other important determinants of electoral participation
+  — such as education, political interest, income, or political mobilization —
+  are not included in this specification. As a result, the estimated association
+  between trust and turnout may partly reflect omitted variable bias.
+
+- The pooled cross-national design may mask substantial **heterogeneity across
+  countries**, since the meaning of both trust and voting varies across
+  political contexts.
+
+- Institutional trust is measured on an **ordinal survey scale**, raising
+  concerns about measurement comparability across settings.
+
+Future research could estimate country-specific models and incorporate
+additional political and socioeconomic controls to better account for contextual
+variation.
+
+The purpose of this report is therefore not to provide a fully saturated model
+of turnout, but to offer a focused first test of the bivariate trust–turnout
+relationship in a comparative Arab context.
+
+
+## References
+
+Arab Barometer. (2022). *Arab Barometer Wave VII: Technical Report (2021–2022).* Arab Barometer. Retrieved from https://www.arabbarometer.org
+
+Blais, A. (2006). What affects voter turnout? *Annual Review of Political Science, 9*, 111–125. https://doi.org/10.1146/annurev.polisci.9.070204.105121
+
+Franklin, M. N. (2004). *Voter turnout and the dynamics of electoral competition in established democracies since 1945.* Cambridge University Press.
+
+Hirschman, A. O. (1970). *Exit, voice, and loyalty: Responses to decline in firms, organizations, and states.* Harvard University Press.
+
+Instance Supérieure Indépendante pour les Élections (ISIE). (2019). *Résultats officiels et taux de participation – Élection présidentielle tunisienne (septembre 2019).* Tunis, Tunisia.
+
+Levi, M., & Stoker, L. (2000). Political trust and trustworthiness. *Annual Review of Political Science, 3*, 475–507. https://doi.org/10.1146/annurev.polisci.3.1.475
+
+Ministère de l’Intérieur (Maroc). (2021). *Communiqué sur les résultats et le taux de participation aux élections législatives du 8 septembre 2021.* Rabat, Morocco.
+
+Newton, K., & Norris, P. (2000). Confidence in public institutions. In S. J. Pharr & R. D. Putnam (Eds.), *Disaffected democracies: What’s troubling the trilateral countries?* (pp. 52–73). Princeton University Press.
+
+Norris, P. (2011). *Democratic deficit: Critical citizens revisited.* Cambridge University Press.
+
+Verba, S., Schlozman, K. L., & Brady, H. E. (1995). *Voice and equality: Civic voluntarism in American politics.* Harvard University Press.
