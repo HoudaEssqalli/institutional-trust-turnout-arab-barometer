@@ -45,17 +45,21 @@ ordinal scale, reversed so higher values mean greater trust.
 ## Reproducing the analysis
 
 Arab Barometer microdata are free to use but require registration, and their
-terms do not allow redistribution — so the data files are not in this repository.
+terms do not allow redistribution — so the data file is not in this repository.
 
-1. Download the Wave VII cross-country file from
+1. Download the Wave VII English release from
    <https://www.arabbarometer.org/survey-data/data-downloads/>
-2. Place it in `data/raw/`
-3. Restore the package environment and render:
+2. Place `AB7_ENG_Release_Version6.csv` in `data/raw/`
+3. Render either report:
 
 ```r
-renv::restore()
-quarto::quarto_render("RR1.qmd")
+quarto::quarto_render("01-trust-turnout.qmd")
+quarto::quarto_render("02-political-interest.qmd")
 ```
+
+Packages used: `dplyr`, `ggplot2`, `knitr`, `kableExtra`, `broom`, `lmtest`,
+`sandwich`, `mice`, `specr`, `here`. Paths are resolved with `here()` from the
+project root, so the analysis runs on any machine without editing the code.
 
 ---
 
