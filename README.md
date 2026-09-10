@@ -22,7 +22,7 @@ ordinal scale, reversed so higher values mean greater trust.
 
 | File | What it is |
 | --- | --- |
-| `RR1.qmd` / `RR1.html` | **Report 1** - main specification: linear probability and logistic models, country fixed effects, HC1 robust standard errors, average marginal effects |
+| `01-trust-turnout.qmd` / `01-trust-turnout.html` | **Report 1** - main specification: linear probability and logistic models, country fixed effects, HC1 robust standard errors, average marginal effects |
 | `Research_report.qmd` / `Research_report.html` | **Report 2** - extends the analysis to political interest and cross-country interaction models |
 
 ---
