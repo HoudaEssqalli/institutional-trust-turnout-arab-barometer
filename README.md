@@ -70,7 +70,7 @@ not address individual-level confounding.
 
 ## Author
 
-**Houda ES-SQALLI** — MSc student, Behavioral and Social Sciences for Public
+**Houda ES-SQALLI** - MSc student, Behavioral and Social Sciences for Public
 Policy, Mohammed VI Polytechnic University (FGSES), Rabat.
 
 ## License
